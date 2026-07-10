@@ -11,7 +11,7 @@ import Pricing from "./pages/Pricing.jsx";
 import InterviewHistory from "./pages/InterviewHistory.jsx";
 import InterviewReport from "./pages/InterviewReport.jsx";
 
-export const ServerUrl = "http://localhost:8000";
+export const ServerUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:8000";
 
 // console.log(ServerUrl);
 

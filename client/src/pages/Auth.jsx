@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { RiRobot3Fill } from "react-icons/ri";
 import { IoSparklesOutline } from "react-icons/io5";
 import { motion } from "motion/react";
@@ -13,7 +13,11 @@ import { setUserData } from "../redux/userSlice";
 function Auth({ isModel = false, onClose }) {
   //arrow function for authentication
   const dispatch = useDispatch(); //
+  const [authLoading, setAuthLoading] = useState(false);
+
   const handleGoogleAuth = async () => {
+    if (authLoading) return;
+    setAuthLoading(true);
     try {
       const response = await signInWithPopup(auth, provider);
       // console.log(response);
@@ -32,7 +36,16 @@ function Auth({ isModel = false, onClose }) {
         onClose();
       }
     } catch (error) {
-      console.log(error);
+      console.log("Authentication Error:", error);
+      if (error.code === "auth/cancelled-popup-request" || error.code === "auth/popup-closed-by-user") {
+        alert("Authentication popup was closed or cancelled. Please try again.");
+      } else if (error.code === "auth/popup-blocked") {
+        alert("Authentication popup was blocked by the browser. Please enable popups for this site.");
+      } else {
+        alert(`Authentication failed: ${error.message || error}`);
+      }
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -65,13 +78,16 @@ function Auth({ isModel = false, onClose }) {
         </p>
 
         <motion.button
+          disabled={authLoading}
           onClick={handleGoogleAuth}
-          whileHover={{ opacity: 0.9, scale: 1.03 }}
-          whileTap={{ opacity: 1, scale: 0.98 }}
-          className="w-full flex items-center justify-center gap-3 py-3 bg-black text-white rounded-full shadow-md"
+          whileHover={!authLoading ? { opacity: 0.9, scale: 1.03 } : {}}
+          whileTap={!authLoading ? { opacity: 1, scale: 0.98 } : {}}
+          className={`w-full flex items-center justify-center gap-3 py-3 bg-black text-white rounded-full shadow-md ${
+            authLoading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           <FcGoogle size={20} />
-          Continue with google
+          {authLoading ? "Signing in..." : "Continue with google"}
         </motion.button>
       </motion.div>
     </div>
