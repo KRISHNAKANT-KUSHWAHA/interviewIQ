@@ -42,7 +42,7 @@ function Step1SetUp({ onStart }) {
         { withCredentials: true },
       );
 
-      console.log(result.data);
+      // console.log(result.data);
 
       setRole(result.data.role || "");
       setExperience(result.data.experience || "");
@@ -67,7 +67,7 @@ function Step1SetUp({ onStart }) {
         { role, experience, mode, resumeText, projects, skills }, //these data need to be send
         { withCredentials: true }, //  help to access cookies
       );
-      console.log(result.data);
+      // console.log(result.data);
 
       if (userData) {
         dispatch(

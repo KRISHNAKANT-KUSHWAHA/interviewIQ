@@ -29,8 +29,6 @@ function Auth({ isModel = false, onClose }) {
         { name, email },
         { withCredentials: true },
       );
-      console.log(result.data);
-
       dispatch(setUserData(result.data)); //
       if (onClose) {
         onClose();

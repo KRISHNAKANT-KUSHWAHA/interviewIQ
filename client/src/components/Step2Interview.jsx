@@ -323,7 +323,7 @@ function Step2Interview({ interviewData, onFinish }) {
         { withCredentials: true },
       );
 
-      console.log(result.data);
+      // console.log(result.data);
       onFinish(result.data);
     } catch (error) {
       console.log(error);
