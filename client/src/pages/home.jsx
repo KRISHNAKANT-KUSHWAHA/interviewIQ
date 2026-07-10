@@ -133,7 +133,7 @@ function Home() {
                 initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 + index * 0.2 }}
-                whileHover={{ rotate: 70, scale: 0, duration: 0.4 }}
+                whileHover={{ y: -6, scale: 1.02 }}
                 className={`
         relative bg-white rounded-3xl border-2 border-green-100 
         hover:border-green-500 p-10 w-80 max-w-[90%] shadow-md hover:shadow-2xl 

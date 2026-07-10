@@ -15,9 +15,9 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-const auth = getAuth(app);
+//
+const auth = getAuth(app); //built in function
 
 const provider = new GoogleAuthProvider();
 
-export { auth, provider };
+export { auth, provider }; //export  for pop for mail id

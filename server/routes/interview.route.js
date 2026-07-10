@@ -3,6 +3,7 @@ import isAuth from "../middlewares/isAuth.js";
 import { upload } from "../middlewares/multer.js";
 import {
   analyzeResume,
+  deleteInterview,
   finishInterview,
   generateQuestion,
   getInterviewReport,
@@ -20,6 +21,7 @@ interviewRouter.post("/finish", isAuth, finishInterview);
 
 interviewRouter.get("/get-interview", isAuth, getMyInterviews);
 interviewRouter.get("/report/:id", isAuth, getInterviewReport); //id sent from frontend
+interviewRouter.delete("/delete/:id", isAuth, deleteInterview);
 
 export default interviewRouter;
 

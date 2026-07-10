@@ -21,6 +21,18 @@ function Step2Interview({ interviewData, onFinish }) {
   const recognitionRef = useRef(null);
   const [isAIPlaying, setIsAIPlaying] = useState(false);
 
+  const isMicOnRef = useRef(isMicOn);
+  const isAIPlayingRef = useRef(isAIPlaying);
+  const explicitStopRef = useRef(false);
+
+  useEffect(() => {
+    isMicOnRef.current = isMicOn;
+  }, [isMicOn]);
+
+  useEffect(() => {
+    isAIPlayingRef.current = isAIPlaying;
+  }, [isAIPlaying]);
+
   const [currentIndex, setCurrentIndex] = useState(0); // to find current question
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -199,9 +211,30 @@ function Step2Interview({ interviewData, onFinish }) {
     recognition.interimResults = false;
 
     recognition.onresult = (event) => {
-      const transcript = event.results[event.results.length - 1][0].transcript;
+      let finalTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        }
+      }
+      if (finalTranscript) {
+        setAnswer((prev) => (prev.trim() + " " + finalTranscript.trim()).trim());
+      }
+    };
 
-      setAnswer((prev) => prev + " " + transcript);
+    recognition.onend = () => {
+      if (explicitStopRef.current) {
+        return; // Explicitly stopped, do not restart
+      }
+      if (isMicOnRef.current && !isAIPlayingRef.current) {
+        try {
+          recognition.start();
+        } catch {}
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
     };
 
     recognitionRef.current = recognition;
@@ -210,6 +243,7 @@ function Step2Interview({ interviewData, onFinish }) {
   // mike features
   const startMic = () => {
     if (recognitionRef.current && !isAIPlaying) {
+      explicitStopRef.current = false;
       try {
         recognitionRef.current.start();
       } catch {}
@@ -218,6 +252,7 @@ function Step2Interview({ interviewData, onFinish }) {
 
   const stopMic = () => {
     if (recognitionRef.current) {
+      explicitStopRef.current = true;
       recognitionRef.current.stop();
     }
   };

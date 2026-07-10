@@ -33,24 +33,29 @@ function Step3Report({ report }) {
     questionWiseScore = [],
   } = report;
 
+  const roundedFinalScore = Math.max(0, Math.round(finalScore));
+  const roundedConfidence = Math.max(0, Math.round(confidence));
+  const roundedCommunication = Math.max(0, Math.round(communication));
+  const roundedCorrectness = Math.max(0, Math.round(correctness));
+
   const questionScoreData = questionWiseScore.map((score, index) => ({
     name: `Q${index + 1}`,
     score: score.score || 0,
   }));
 
   const skills = [
-    { label: "Confidence", value: confidence },
-    { label: "Communication", value: communication },
-    { label: "Correctness", value: correctness },
+    { label: "Confidence", value: roundedConfidence },
+    { label: "Communication", value: roundedCommunication },
+    { label: "Correctness", value: roundedCorrectness },
   ];
 
   let performanceText = "";
   let shortTagline = "";
 
-  if (finalScore >= 8) {
+  if (roundedFinalScore >= 8) {
     performanceText = "Ready for job opportunities.";
     shortTagline = "Excellent clarity and structured responses.";
-  } else if (finalScore >= 5) {
+  } else if (roundedFinalScore >= 5) {
     performanceText = "Needs minor improvement before interviews.";
     shortTagline = "Good foundation, refine articulation.";
   } else {
@@ -58,7 +63,7 @@ function Step3Report({ report }) {
     shortTagline = "Work on clarity and confidence.";
   }
 
-  const score = finalScore;
+  const score = roundedFinalScore;
   const percentage = (score / 10) * 100;
 
   const downloadPDF = () => {
@@ -92,7 +97,7 @@ function Step3Report({ report }) {
 
     doc.setFontSize(14);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Final Score: ${finalScore}/10`, pageWidth / 2, currentY + 12, {
+    doc.text(`Final Score: ${roundedFinalScore}/10`, pageWidth / 2, currentY + 12, {
       align: "center",
     });
 
@@ -104,19 +109,19 @@ function Step3Report({ report }) {
 
     doc.setFontSize(12);
 
-    doc.text(`Confidence: ${confidence}`, margin + 10, currentY + 10);
-    doc.text(`Communication: ${communication}`, margin + 10, currentY + 18);
-    doc.text(`Correctness: ${correctness}`, margin + 10, currentY + 26);
+    doc.text(`Confidence: ${roundedConfidence}`, margin + 10, currentY + 10);
+    doc.text(`Communication: ${roundedCommunication}`, margin + 10, currentY + 18);
+    doc.text(`Correctness: ${roundedCorrectness}`, margin + 10, currentY + 26);
 
     currentY += 45;
 
     // ================= ADVICE =================
     let advice = "";
 
-    if (finalScore >= 8) {
+    if (roundedFinalScore >= 8) {
       advice =
         "Excellent performance. Maintain confidence and structure. Continue refining clarity and supporting answers with strong real-world examples.";
-    } else if (finalScore >= 5) {
+    } else if (roundedFinalScore >= 5) {
       advice =
         "Good foundation shown. Improve clarity and structure. Practice delivering concise, confident answers with stronger supporting examples.";
     } else {
@@ -148,7 +153,7 @@ function Step3Report({ report }) {
         `${i + 1}`,
         q.question,
         `${q.score}/10`,
-        q.feedback,
+        q.feedback + (q.correctAnswer ? `\n\nIdeal Answer:\n${q.correctAnswer}` : ""),
       ]),
       styles: {
         fontSize: 9,
@@ -336,6 +341,17 @@ function Step3Report({ report }) {
                         : "No feedback available for this question."}
                     </p>
                   </div>
+
+                  {q.correctAnswer && (
+                    <div className="mt-3 bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                      <p className="text-xs text-blue-600 font-semibold mb-1">
+                        Ideal/Correct Answer
+                      </p>
+                      <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                        {q.correctAnswer}
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

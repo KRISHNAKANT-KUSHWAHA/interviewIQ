@@ -116,7 +116,7 @@ function Navbar() {
                   onClick={() => {
                     navigate("/history");
                   }}
-                  className="w-full text-left text-sm py-2 hover:text-black text-grey-600"
+                  className="w-full text-left text-sm py-2 hover:text-black text-gray-600"
                 >
                   Interview History
                 </button>

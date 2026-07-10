@@ -27,7 +27,7 @@ function Auth({ isModel = false, onClose }) {
       );
       console.log(result.data);
 
-      dispatch(setUserData(result.data.user)); //
+      dispatch(setUserData(result.data)); //
       if (onClose) {
         onClose();
       }
@@ -63,6 +63,7 @@ function Auth({ isModel = false, onClose }) {
           sign in to start AI-powered mock interviews, track your progress, and
           unlock detailed performance insights.
         </p>
+
         <motion.button
           onClick={handleGoogleAuth}
           whileHover={{ opacity: 0.9, scale: 1.03 }}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ServerUrl } from "../App";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaTrash } from "react-icons/fa";
 
 function InterviewHistory() {
   const [interviews, setInterviews] = useState([]); // array has all interviews
@@ -26,6 +26,18 @@ function InterviewHistory() {
 
     getMyInterviews();
   }, []);
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(ServerUrl + `/api/interview/delete/${id}`, {
+        withCredentials: true,
+      });
+      setInterviews((prev) => prev.filter((item) => item._id !== id));
+    } catch (error) {
+      console.log(error);
+      alert("Failed to delete interview record");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-emerald-100 py-10">
@@ -83,7 +95,7 @@ function InterviewHistory() {
                     {/* SCORE */}
                     <div className="text-right">
                       <p className="text-xl font-bold text-emerald-600">
-                        {item.finalScore || 0}/10
+                        {Math.max(0, Math.round(item.finalScore || 0))}/10
                       </p>
                       <p className="text-xs text-gray-400">Overall Score</p>
                     </div>
@@ -98,6 +110,24 @@ function InterviewHistory() {
                     >
                       {item.status}
                     </span>
+
+                    {/* DELETE ACTION */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (
+                          window.confirm(
+                            "Are you sure you want to delete this interview record?"
+                          )
+                        ) {
+                          handleDelete(item._id);
+                        }
+                      }}
+                      className="p-3 text-red-500 hover:bg-red-50 hover:text-red-700 rounded-full transition duration-200"
+                      title="Delete record"
+                    >
+                      <FaTrash size={16} />
+                    </button>
                   </div>
                 </div>
               </div>

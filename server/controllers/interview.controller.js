@@ -7,6 +7,16 @@ import { askAi } from "../services/openRouter.service.js";
 import User from "../models/user.model.js";
 import Interview from "../models/interview.model.js";
 
+const parseAiJson = (text) => {
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start !== -1 && end !== -1 && end > start) {
+    const jsonStr = text.substring(start, end + 1);
+    return JSON.parse(jsonStr);
+  }
+  return JSON.parse(text);
+};
+
 export const analyzeResume = async (req, res) => {
   try {
     if (!req.file) {
@@ -59,7 +69,7 @@ Return strictly JSON:
     //giving prompt to function
     const aiResponse = await askAi(messages);
 
-    const parsed = JSON.parse(aiResponse);
+    const parsed = parseAiJson(aiResponse);
 
     fs.unlinkSync(filepath); // automatically delete the resume file after analysis
 
@@ -141,45 +151,93 @@ export const generateQuestion = async (req, res) => {
       });
     }
 
+    // You are a real human interviewer conducting a professsional interview.
+
+    // speak in simple, natural English as if you are directly talking to the candidate.
+
+    // Generate exactly 15 interview questions.
+
+    // Strict Rules:
+    // -Each question must contains between 15 and 25 words.
+    // -Each question must be a single complete sentence.
+    // -DO NOT number them.
+    // -DO NOT add explanations.
+    // -DO NOT add extra text before or after.
+    // -One question per line only.
+    // -Keep language simple and conversational.
+    // -Questions must feel practical and realistic.
+
+    // Difficulty progression:
+    // Question 1 → easy
+    // Question 2 → easy
+    // Question 3 → easy
+    // Question 4 → easy
+    // Question 5 → hard
+    // Question 6 → medium
+    // Question 7 → medium
+    // Question 8 → medium
+    // Question 9 → medium
+    // Question 10 → easy
+    // Question 11 → hard
+    // Question 12 → hard
+    // Question 13 → hard
+    // Question 14 → hard
+    // Question 15 → medium
+
+    // Make questions based on the candidate's role, experience, projects, skills, and resume details.
+
     //message to ai
     const messages = [
       {
         role: "system",
         content: `
-      You are a real human interviewer conducting a professsional interview.
-      
-      speak in simple, natural English as if you are directly talking to the candidate.
+      You are a real human interviewer conducting a professional software engineering interview.
 
-      Generate exactly 15 interview questions.
+Speak in simple, natural English as if you are directly talking to the candidate.
 
-      Strict Rules:
-      -Each question must contains between 15 and 25 words.
-      -Each question must be a single complete sentence.
-      -DO NOT number them.
-      -DO NOT add explanations.
-      -DO NOT add extra text before or after.
-      -One question per line only.
-      -Keep language simple and conversational.
-      -Questions must feel practical and realistic.
-      
-      Difficulty progression:
-      Question 1 → easy  
-      Question 2 → easy  
-      Question 3 → easy  
-      Question 4 → easy 
-      Question 5 → hard
-      Question 6 → medium  
-      Question 7 → medium
-      Question 8 → medium  
-      Question 9 → medium 
-      Question 10 → easy
-      Question 11 → hard
-      Question 12 → hard
-      Question 13 → hard  
-      Question 14 → hard 
-      Question 15 → medium 
+Generate exactly 15 interview questions.
 
-      Make questions based on the candidate's role, experience, projects, skills, and resume details.
+The questions must include a balanced mix of:
+
+- Role-based interview questions related to the candidate’s job role.
+- Technical questions based on the candidate’s listed skills and technologies.
+- Data Structures and Algorithms (DSA) or logical problem-solving questions when relevant to the role.
+- Practical questions based on the candidate’s projects and experience.
+
+Strict Rules:
+- Each question must contain between 15 and 25 words.
+- Each question must be a single complete sentence.
+- DO NOT number the questions.
+- DO NOT add explanations.
+- DO NOT add extra text before or after.
+- One question per line only.
+- Keep language simple and conversational.
+- Questions must feel practical and realistic like a real interview.
+
+Difficulty progression:
+Question 1 → easy  
+Question 2 → easy  
+Question 3 → easy  
+Question 4 → easy  
+Question 5 → hard  
+Question 6 → medium  
+Question 7 → medium  
+Question 8 → medium  
+Question 9 → medium  
+Question 10 → easy  
+Question 11 → hard  
+Question 12 → hard  
+Question 13 → hard  
+Question 14 → hard  
+Question 15 → medium  
+
+Additional Rules:
+- Ask at least 4 technical questions based on the candidate's skills.
+- Ask at least 3 DSA or problem-solving questions if the role is software engineering related.
+- Ask at least 3 questions about the candidate’s projects.
+- Ask practical questions that test real-world thinking.
+
+Make all questions based on the candidate's role, experience, projects, skills, and resume details.
       `,
       },
 
@@ -274,40 +332,12 @@ export const submitAnswer = async (req, res) => {
     const { interviewId, questionIndex, answer, timeTaken } = req.body;
 
     const interview = await Interview.findById(interviewId);
-
-    // if (!interview) {
-    //   return res.status(404).json({ message: "Interview not found" });
-    // }
-
     const question = interview.questions[questionIndex];
 
-    // If no answer
-    if (!answer) {
-      question.score = 0;
-      question.feedback = "You did not submit an answer.";
-      question.answer = "";
+    const isTimeExceeded = timeTaken > question.timeLimit;
+    const formattedAnswer = answer ? answer.trim() : "";
 
-      await interview.save();
-
-      return res.json({
-        feedback: question.feedback,
-      });
-    }
-
-    // If time exceeded
-    if (timeTaken > question.timeLimit) {
-      question.score = 0;
-      question.feedback = "Time limit exceeded. Answer not evaluated.";
-      question.answer = answer;
-
-      await interview.save();
-
-      return res.json({
-        feedback: question.feedback,
-      });
-    }
-
-    //core of the given answer
+    // evaluation prompt
     const messages = [
       {
         role: "system",
@@ -325,7 +355,7 @@ Score the answer in these areas (0 to 10):
 Rules:
 - Be realistic and unbiased.
 - Do not give random high scores.
-- If the answer is weak, score low.
+- If the answer is weak or missing, score low or 0.
 - If the answer is strong and detailed, score high.
 - Consider clarity, structure, and relevance.
 
@@ -334,12 +364,15 @@ finalScore = average of confidence, communication, and correctness (rounded to n
 
 Feedback Rules:
 - Write natural human feedback.
-- 10 to 15 words only.
 - Sound like real interview feedback.
 - Can suggest improvement if needed.
 - Do NOT repeat the question.
 - Do NOT explain scoring.
 - Keep tone professional and honest.
+- If the user did not submit an answer (indicated by "[No answer provided]"), write feedback explaining what they should have focused on.
+
+Correct Answer Generation:
+- Provide a clear, simple, and complete correct answer to the question that is easy to understand and serves as a model response.
 
 Return ONLY valid JSON in this format:
 
@@ -348,34 +381,51 @@ Return ONLY valid JSON in this format:
   "communication": number,
   "correctness": number,
   "finalScore": number,
-  "feedback": "short human feedback"
+  "feedback": "short human feedback",
+  "correctAnswer": "a proper, simple, and complete correct answer to the question"
 }
 `,
       },
-      //user ka role
       {
         role: "user",
         content: `
 Question: ${question.question}
-Answer: ${answer}
+Answer: ${formattedAnswer || "[No answer provided]"}
 `,
       },
     ];
 
     const aiResponse = await askAi(messages);
+    const parsed = parseAiJson(aiResponse);
 
-    const parsed = JSON.parse(aiResponse);
+    question.answer = formattedAnswer;
+    question.correctAnswer = parsed.correctAnswer || "";
 
-    question.answer = answer;
-    question.confidence = parsed.confidence;
-    question.communication = parsed.communication;
-    question.correctness = parsed.correctness;
-    question.score = parsed.finalScore;
-    question.feedback = parsed.feedback;
+    if (!formattedAnswer) {
+      question.confidence = 0;
+      question.communication = 0;
+      question.correctness = 0;
+      question.score = 0;
+      question.feedback = "You did not submit an answer. " + (parsed.feedback || "");
+    } else if (isTimeExceeded) {
+      question.confidence = 0;
+      question.communication = 0;
+      question.correctness = 0;
+      question.score = 0;
+      question.feedback = "Time limit exceeded. " + (parsed.feedback || "");
+    } else {
+      question.confidence = parsed.confidence || 0;
+      question.communication = parsed.communication || 0;
+      question.correctness = parsed.correctness || 0;
+      question.score = parsed.finalScore || 0;
+      question.feedback = parsed.feedback || "";
+    }
+
     await interview.save();
 
-    return res.status(200).json({ feedback: parsed.feedback });
+    return res.status(200).json({ feedback: question.feedback });
   } catch (error) {
+    console.error("SUBMIT ANSWER ERROR:", error);
     return res
       .status(500)
       .json({ message: `failed to submit answer ${error}` });
@@ -406,29 +456,22 @@ export const finishInterview = async (req, res) => {
       totalCorrectness += q.correctness || 0;
     });
 
-    const finalScore = totalQuestions ? totalScore / totalQuestions : 0;
+    const roundedFinalScore = Math.max(0, Math.round(finalScore));
+    const roundedConfidence = Math.max(0, Math.round(avgConfidence));
+    const roundedCommunication = Math.max(0, Math.round(avgCommunication));
+    const roundedCorrectness = Math.max(0, Math.round(avgCorrectness));
 
-    const avgConfidence = totalQuestions ? totalConfidence / totalQuestions : 0;
-
-    const avgCommunication = totalQuestions
-      ? totalCommunication / totalQuestions
-      : 0;
-
-    const avgCorrectness = totalQuestions
-      ? totalCorrectness / totalQuestions
-      : 0;
-
-    interview.finalScore = finalScore;
+    interview.finalScore = roundedFinalScore;
     interview.status = "completed";
 
     await interview.save(); //save the interview
 
     //return values for the report
     return res.status(200).json({
-      finalScore: Number(finalScore.toFixed(1)),
-      confidence: Number(avgConfidence.toFixed(1)),
-      communication: Number(avgCommunication.toFixed(1)),
-      correctness: Number(avgCorrectness.toFixed(1)),
+      finalScore: roundedFinalScore,
+      confidence: roundedConfidence,
+      communication: roundedCommunication,
+      correctness: roundedCorrectness,
 
       questionWiseScore: interview.questions.map((q) => ({
         question: q.question,
@@ -437,6 +480,7 @@ export const finishInterview = async (req, res) => {
         confidence: q.confidence || 0,
         communication: q.communication || 0,
         correctness: q.correctness || 0,
+        correctAnswer: q.correctAnswer || "",
       })),
     });
   } catch (error) {
@@ -462,7 +506,7 @@ export const getMyInterviews = async (req, res) => {
   }
 };
 
-//single interview  report 
+//single interview  report
 export const getInterviewReport = async (req, res) => {
   try {
     const interview = await Interview.findById(req.params.id);
@@ -483,26 +527,41 @@ export const getInterviewReport = async (req, res) => {
       totalCorrectness += q.correctness || 0;
     });
 
-    const avgConfidence = totalQuestions ? totalConfidence / totalQuestions : 0;
-
-    const avgCommunication = totalQuestions
-      ? totalCommunication / totalQuestions
-      : 0;
-
-    const avgCorrectness = totalQuestions
-      ? totalCorrectness / totalQuestions
-      : 0;
+    const roundedConfidence = Math.max(0, Math.round(avgConfidence));
+    const roundedCommunication = Math.max(0, Math.round(avgCommunication));
+    const roundedCorrectness = Math.max(0, Math.round(avgCorrectness));
+    const roundedFinalScore = Math.max(0, Math.round(interview.finalScore || 0));
 
     return res.json({
-      finalScore: interview.finalScore,
-      confidence: Number(avgConfidence.toFixed(1)), // after decimal only one digit
-      communication: Number(avgCommunication.toFixed(1)),
-      correctness: Number(avgCorrectness.toFixed(1)),
+      finalScore: roundedFinalScore,
+      confidence: roundedConfidence,
+      communication: roundedCommunication,
+      correctness: roundedCorrectness,
       questionWiseScore: interview.questions,
     });
   } catch (error) {
     return res.status(500).json({
       message: `failed to find currentUser Interview report ${error}`,
+    });
+  }
+};
+
+//delete interview record
+export const deleteInterview = async (req, res) => {
+  try {
+    const interview = await Interview.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.userId,
+    });
+
+    if (!interview) {
+      return res.status(404).json({ message: "Interview not found" });
+    }
+
+    return res.status(200).json({ message: "Interview deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({
+      message: `failed to delete interview ${error}`,
     });
   }
 };
