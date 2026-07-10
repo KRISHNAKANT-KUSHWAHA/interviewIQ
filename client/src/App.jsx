@@ -11,7 +11,12 @@ import Pricing from "./pages/Pricing.jsx";
 import InterviewHistory from "./pages/InterviewHistory.jsx";
 import InterviewReport from "./pages/InterviewReport.jsx";
 
-export const ServerUrl = import.meta.env.VITE_SERVER_URL || "http://localhost:8000";
+export const ServerUrl =
+  import.meta.env.VITE_SERVER_URL ||
+  (typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:8000"
+    : "https://interviewiq-v30n.onrender.com");
 
 // console.log(ServerUrl);
 
