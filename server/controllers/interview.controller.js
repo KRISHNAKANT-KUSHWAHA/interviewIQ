@@ -456,7 +456,12 @@ export const finishInterview = async (req, res) => {
       totalCorrectness += q.correctness || 0;
     });
 
-    const roundedFinalScore = Math.max(0, Math.round(finalScore));
+    const avgScore = totalQuestions > 0 ? totalScore / totalQuestions : 0;
+    const avgConfidence = totalQuestions > 0 ? totalConfidence / totalQuestions : 0;
+    const avgCommunication = totalQuestions > 0 ? totalCommunication / totalQuestions : 0;
+    const avgCorrectness = totalQuestions > 0 ? totalCorrectness / totalQuestions : 0;
+
+    const roundedFinalScore = Math.max(0, Math.round(avgScore));
     const roundedConfidence = Math.max(0, Math.round(avgConfidence));
     const roundedCommunication = Math.max(0, Math.round(avgCommunication));
     const roundedCorrectness = Math.max(0, Math.round(avgCorrectness));
@@ -527,11 +532,16 @@ export const getInterviewReport = async (req, res) => {
       totalCorrectness += q.correctness || 0;
     });
 
+    const avgConfidence = totalQuestions > 0 ? totalConfidence / totalQuestions : 0;
+    const avgCommunication = totalQuestions > 0 ? totalCommunication / totalQuestions : 0;
+    const avgCorrectness = totalQuestions > 0 ? totalCorrectness / totalQuestions : 0;
+
     const roundedConfidence = Math.max(0, Math.round(avgConfidence));
     const roundedCommunication = Math.max(0, Math.round(avgCommunication));
     const roundedCorrectness = Math.max(0, Math.round(avgCorrectness));
     const roundedFinalScore = Math.max(0, Math.round(interview.finalScore || 0));
 
+    res.set("Cache-Control", "no-store");
     return res.json({
       finalScore: roundedFinalScore,
       confidence: roundedConfidence,
@@ -540,6 +550,7 @@ export const getInterviewReport = async (req, res) => {
       questionWiseScore: interview.questions,
     });
   } catch (error) {
+    console.error("GET INTERVIEW REPORT ERROR:", error);
     return res.status(500).json({
       message: `failed to find currentUser Interview report ${error}`,
     });

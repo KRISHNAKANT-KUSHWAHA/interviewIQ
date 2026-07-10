@@ -475,7 +475,7 @@ function Step2Interview({ interviewData, onFinish }) {
                 onClick={handleNext}
                 className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white py-3 rounded-xl shadow-md hover:opacity-90 transition flex items-center justify-center gap-1"
               >
-                Next Question <BsArrowRight size={18} />
+                {currentIndex + 1 >= questions.length ? "Finish & View Report" : "Next Question"} <BsArrowRight size={18} />
               </button>
             </motion.div>
           )}
